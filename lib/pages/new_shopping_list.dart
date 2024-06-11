@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class NewShoppingListPage extends StatefulWidget {
   final String category;
@@ -11,6 +12,7 @@ class NewShoppingListPage extends StatefulWidget {
 
 class NewShoppingListPageState extends State<NewShoppingListPage> {
   final List<Item> items = [];
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   void _addItem() {
     showDialog(
@@ -19,7 +21,12 @@ class NewShoppingListPageState extends State<NewShoppingListPage> {
         return ItemDialog(
           onSave: (name, price) {
             setState(() {
-              items.add(Item(name: name, price: price));
+              items.add(Item(name: name, price: price, id: _firestore.collection('itemBelanja').doc().id));
+              _firestore.collection('itemBelanja').doc(items.last.id).set({
+                'nama': name,
+                'harga': price,
+                'checked': false,
+              });
             });
           },
         );
@@ -37,6 +44,10 @@ class NewShoppingListPageState extends State<NewShoppingListPage> {
             setState(() {
               items[index].name = name;
               items[index].price = price;
+              _firestore.collection('itemBelanja').doc(items[index].id).update({
+                'nama': name,
+                'harga': price,
+              });
             });
           },
         );
@@ -46,6 +57,7 @@ class NewShoppingListPageState extends State<NewShoppingListPage> {
 
   void _deleteItem(int index) {
     setState(() {
+      _firestore.collection('itemBelanja').doc(items[index].id).delete();
       items.removeAt(index);
     });
   }
@@ -72,6 +84,9 @@ class NewShoppingListPageState extends State<NewShoppingListPage> {
               onChanged: (bool? value) {
                 setState(() {
                   item.checked = value!;
+                  _firestore.collection('itemBelanja').doc(item.id).update({
+                    'checked': value,
+                  });
                 });
               },
             ),
@@ -115,11 +130,12 @@ class NewShoppingListPageState extends State<NewShoppingListPage> {
 }
 
 class Item {
+  String id;
   String name;
   int price;
   bool checked;
 
-  Item({required this.name, required this.price, this.checked = false});
+  Item({required this.id, required this.name, required this.price, this.checked = false});
 }
 
 class ItemDialog extends StatefulWidget {
@@ -160,40 +176,39 @@ class _ItemDialogState extends State<ItemDialog> {
               decoration: InputDecoration(labelText: 'Nama Item'),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Masukkan nama item';
-                }
-                return null;
-              },
+                  return 'Nama item tidak boleh kosong';
+               } },
             ),
             TextFormField(
               controller: _priceController,
               decoration: InputDecoration(labelText: 'Harga Item'),
-              keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Masukkan harga item';
+                  return 'Harga item tidak boleh kosong';
                 }
-                return null;
+                if (int.tryParse(value) == null) {
+                  return 'Harga item harus berupa angka';
+                }
               },
             ),
           ],
         ),
       ),
-      actions: <Widget>[
+      actions: [
         TextButton(
+          child: Text('Batal'),
           onPressed: () {
             Navigator.of(context).pop();
           },
-          child: Text('Batal'),
         ),
         TextButton(
+          child: Text('Simpan'),
           onPressed: () {
             if (_formKey.currentState!.validate()) {
               widget.onSave(_nameController.text, int.parse(_priceController.text));
               Navigator.of(context).pop();
             }
           },
-          child: Text('Simpan'),
         ),
       ],
     );

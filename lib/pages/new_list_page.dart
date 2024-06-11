@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:smartcart_app/pages/new_shopping_list.dart';
-import 'new_shopping_list.dart'; // Mengimpor halaman baru
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class NewListPage extends StatelessWidget {
+import 'new_shopping_list.dart';
+
+class NewListPage extends StatefulWidget {
+  @override
+  _NewListPageState createState() => _NewListPageState();
+}
+
+class _NewListPageState extends State<NewListPage> {
   final TextEditingController _nameController = TextEditingController();
 
   @override
@@ -24,7 +30,11 @@ class NewListPage extends StatelessWidget {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                await FirebaseFirestore.instance.collection('buatDaftar').add({
+                  'namaDaftar': _nameController.text,
+                });
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
