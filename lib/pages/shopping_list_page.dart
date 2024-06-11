@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class ShoppingListPage extends StatefulWidget {
@@ -18,6 +19,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     Item(name: 'Blueband', price: 25000),
     Item(name: 'Yakult', price: 50000),
   ];
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   void _addItem() {
     showDialog(
