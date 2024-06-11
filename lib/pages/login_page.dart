@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smartcart_app/bloc/login/login_cubit.dart';
 
 class LoginPage extends StatelessWidget {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,15 +36,17 @@ class LoginPage extends StatelessWidget {
             ),
             SizedBox(height: 20),
             TextFormField(
+              controller: _emailController,
               decoration: InputDecoration(
-                labelText: 'username',
+                labelText: 'Email',
                 border: OutlineInputBorder(),
               ),
             ),
             SizedBox(height: 20),
             TextFormField(
+              controller: _passwordController,
               decoration: InputDecoration(
-                labelText: 'password',
+                labelText: 'Password',
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
@@ -53,21 +60,45 @@ class LoginPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, '/home');
+            BlocConsumer<LoginCubit, LoginState>(
+              listener: (context, state) {
+                if (state is LoginSuccess) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(state.msg)),
+                  );
+                  Navigator.pushReplacementNamed(context, '/home');
+                } else if (state is LoginFailure) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(state.msg)),
+                  );
+                }
               },
-              child: Text('Login'),
-              style: ElevatedButton.styleFrom(
-                primary: Colors.orange,
-                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                textStyle: TextStyle(fontSize: 16),
-              ),
+              builder: (context, state) {
+                if (state is LoginLoading) {
+                  return CircularProgressIndicator();
+                }
+                return ElevatedButton(
+                  onPressed: () {
+                    final email = _emailController.text;
+                    final password = _passwordController.text;
+                    context.read<LoginCubit>().login(
+                      email: email,
+                      password: password,
+                    );
+                  },
+                  child: Text('Login'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    textStyle: TextStyle(fontSize: 16),
+                  ),
+                );
+              },
             ),
             SizedBox(height: 20),
             TextButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/sign_up');  // Navigate to sign up page
+                Navigator.pushNamed(context, '/sign_up');
               },
               child: Text('Belum punya akun? Sign Up'),
             ),
